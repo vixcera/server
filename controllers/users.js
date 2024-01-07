@@ -1,6 +1,6 @@
 import fs from "fs"
 import path from "path"
-import argon from "argon2"
+import bcyrpt from "bcryptjs"
 import date from "date-time"
 import jwt from "jsonwebtoken"
 import randomize from "../utils/randomize.js"
@@ -18,7 +18,7 @@ export const user_login = async (request, response) => {
     const user = await users.findOne({ email })
     if (!user) return response.status(404).json("account not found!")
     try {
-        const match = await argon.verify(user.password, password)
+        const match = await bcyrpt.compare(password, user.password)
         if (!match) return response.status(403).json("password doesn't match!")
 
         const token = jwt.sign({
@@ -78,7 +78,8 @@ export const user_confirm = async (request, response) => {
         const data = jwt.decode(token)
         const user = await users.findOne({email : data.email})
         if (user) return response.status(403).redirect(`${process.env.clientUrl}/login`)
-        const hash = await argon.hash(data.password)
+        const salt = await bcyrpt.genSalt();
+        const hash = await bcyrpt.hash(data.password, salt)
         await users.create({ id: data.id, username : data.username, password : hash, email : data.email })
         response.status(201).redirect(`${process.env.clientUrl}/login`)
     })

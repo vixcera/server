@@ -2,7 +2,7 @@ import contributor from "../models/contributormodel.js"
 import nodemailer from "../utils/nodemailer.js";
 import randomize from "../utils/randomize.js";
 import jwt from "jsonwebtoken"
-import argon2 from "argon2"
+import bcyrpt from "bcryptjs"
 
 export const contributor_login = async(request, response) => {
     const agent = request.headers['user-agent']
@@ -10,7 +10,7 @@ export const contributor_login = async(request, response) => {
     const cont = await contributor.findOne({ email })
     if (!cont) return response.status(404).json("account not found")
     try {
-        const match = await argon2.verify(cont.password, password)
+        const match = await bcyrpt.compare(password, cont.password)
         if (!match) return response.status(403).json("password doesn't match!")
         
         const token = jwt.sign({
@@ -75,7 +75,8 @@ export const contributor_confirm = async(request, response) => {
         const data = jwt.decode(token)
         const cont = await contributor.findOne({ email : data.email })
         if (cont) return response.status(302).redirect(`${process.env.clientUrl}/login/contributor`)
-        const hash = await argon2.hash(data.password)
+        const salt = await bcyrpt.genSalt();
+        const hash = await bcyrpt.hash(data.password, salt)
         await contributor.create({
             id       : data.id,
             email    : data.email,
