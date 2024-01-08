@@ -1,7 +1,9 @@
 {
   "name": "api-vixcera",
   "version": "1.0.0",
-  "engines": {"node": ">=16.17.1"},
+  "engines": {
+    "node": ">=16.17.1"
+  },
   "description": "",
   "type": "module",
   "main": "index.js",
@@ -22,14 +24,12 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.1",
-    "express-rate-limit": "^7.1.5",
     "express-session": "^1.17.3",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "midtrans-client": "^1.3.1",
     "mongoose": "^7.6.7",
     "mysql2": "^3.6.1",
-    "netlify-lambda": "^2.0.16",
     "nodemailer": "^6.9.6",
     "router": "^1.3.8",
     "sequelize": "^6.33.0",
