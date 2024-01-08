@@ -5,16 +5,13 @@ import limiter from "express-rate-limit"
 import express from 'express';
 import helmet from "helmet";
 import dotenv from 'dotenv';
-import http from 'http';
 import cors from 'cors';
 import router from './router/router.js';
 import connectDB from './config/database.js';
 
 const app = express();
-const port = 3000;
-const server = new http.createServer(app);
-
 dotenv.config();
+connectDB()
 
 app.use(cors({ credentials: true, origin: ['https://vixcera.my.id', 'http://localhost:5173'] }));
 app.use(helmet.contentSecurityPolicy({ directives: { "script-src" : ["'self'", "code.jquery.com", "cdn.jsdelivr.net"] } }))
@@ -27,6 +24,5 @@ app.use(cookieParser());
 app.use(express.static('public'));
 app.use(router);
 
-connectDB().then(() => {
-  server.listen(port, (error) => { (error) ? console.log(error.msessage) : console.log('==> server running'); });
-});
+
+app.listen(3000, (error) => { (error) ? console.log(error.msessage) : console.log('==> server running'); });
