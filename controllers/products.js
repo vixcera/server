@@ -21,11 +21,11 @@ export const productById = async (request, response) => {
 export const productsByCategory = async (request, response) => {
   const { ctg } = request.params;
   const data = await products.find({ ctg });
-  const filter = {
-    title: data.title, desc: data.desc, img: data.img, id: data._id, price: data.price,
-  };
+  // const filter = {
+  //   title: data.title, desc: data.desc, img: data.img, id: data._id, price: data.price,
+  // };
   if (!data) return response.status(404).json('products not found!');
-  response.status(200).json(filter);
+  response.status(200).json(data);
 };
 
 export const createProduct = async (request, response) => {
