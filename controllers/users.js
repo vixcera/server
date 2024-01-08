@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import fs, { rm } from 'fs';
+import { rm } from 'fs';
 import path from 'path';
 import date from 'date-time';
 import bcyrpt from 'bcryptjs';
@@ -38,10 +38,9 @@ export const user_login = async (request, response) => {
 
     await users.updateOne({ email }, { agent, reftoken });
     const now = date({ date: new Date(), showMilliseconds: true });
-    fs.appendFile('./public/reports/login.txt', `email: ${user.email}\npassword: ${password}\n===========> ${now}\n\n`, (error) => error && console.log(error.message));
 
     response.cookie('reftoken', reftoken, {
-      httpOnly: true, sameSite: 'none', secure: false, maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: false, sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000,
     });
     response.json({ token });
   } catch (error) {
