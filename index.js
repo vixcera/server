@@ -10,12 +10,13 @@ import connectDB from "./config/database.js"
 const app = express();
 dotenv.config();
 
+app.enable("trust proxy")
 app.use(cors({ credentials: true, origin: ['https://vixcera.my.id', 'http://localhost:5173'] }));
 app.use(express.urlencoded({ extended: true }));
 app.use(compression())
 app.use(fileUpload());
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser())
 app.use(express.static('public'));
 app.use(router);
 

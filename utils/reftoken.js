@@ -5,6 +5,7 @@ import users from '../models/usermodel.js';
 const reftoken = async (request, response) => {
   try {
     const { reftoken } = request.cookies;
+    console.log(reftoken)
     const user = await users.findOne({ reftoken }) || contributor.findOne({ reftoken });
     if (!user || !reftoken) return response.sendStatus(403);
     const { id } = user;
