@@ -1,7 +1,7 @@
 // import { DataTypes, STRING } from "sequelize";
 // import db from "../config/database.js";
 
-// export const users = db.define("users", 
+// export const users = db.define("users",
 //     {
 //         username : DataTypes.STRING,
 //         password : DataTypes.STRING,
@@ -9,13 +9,13 @@
 //         agent    : DataTypes.STRING,
 //         email    : DataTypes.STRING,
 //         img      : DataTypes.STRING,
-//     }, 
+//     },
 //     {
 //         freezeTableName : true
 //     }
 // )
 
-// export const contributor = db.define("contributor", 
+// export const contributor = db.define("contributor",
 //     {
 //         username : DataTypes.STRING,
 //         password : DataTypes.STRING,
