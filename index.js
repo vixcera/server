@@ -10,7 +10,7 @@ import router from './router/router.js';
 const app = express();
 dotenv.config();
 
-mongoose.connect(`${process.env.mongourl}`)
+mongoose.connect(process.env.mongourl)
 .then(() => console.log("==> database connected"))
 .catch((error) => {console.log(error.message), process.exit(1)})
 
