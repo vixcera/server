@@ -61,7 +61,7 @@ export const user_register = async (request, response) => {
       username,
       password,
     }, process.env.token);
-    const url = `${process.env.serverUrl}/confirm/user/${token}`;
+    const url = `${request.protocol}://${request.get("host")}/confirm/user/${token}`;
     console.log(url);
     nodemailer(email, username, url, response);
   } else return response.status(403).json('data is incomplete, please complete the data!');

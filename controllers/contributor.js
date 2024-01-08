@@ -56,7 +56,7 @@ export const contributor_register = async (request, response) => {
     }, process.env.token, {
       expiresIn: '15m',
     });
-    const url = `${process.env.serverUrl}/confirm/contributor/${token}`;
+    const url = `${request.protocol}://${request.get("host")}/confirm/contributor/${token}`;
     nodemailer(email, username, url, response);
   } else {
     return response.status(400).send('incomplete data');
