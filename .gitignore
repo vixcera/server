@@ -3,3 +3,4 @@ node_modules
 req.rest
 .DS_Store
 .netlify
+dist
