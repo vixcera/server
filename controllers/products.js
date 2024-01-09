@@ -13,7 +13,7 @@ export const allProducts = async (request, response) => {
 
 export const productById = async (request, response) => {
   const { id } = request.params;
-  const data = await products.findAll({ where: { id }, attributes: ['id', 'title', 'img', 'price', 'desc'] });
+  const data = await products.find({ id }, { file: false });
   if (!data) return response.status(404).json('product not found');
   response.status(200).json(data);
 };
