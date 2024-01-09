@@ -85,7 +85,7 @@ export const confirmProduct = async (request, response) => {
   if (!data) return response.status(404).json('product data not found');
   try {
     await products.create({
-      price: data.price, title: data.title, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
+      id: data.id, price: data.price, title: data.title, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
     });
     await waiting.findOneAndDelete({ id: request.body.id });
     return response.status(201).json('product verification successful');
