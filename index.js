@@ -10,6 +10,7 @@ import connectDB from "./config/database.js"
 const app = express();
 dotenv.config();
 
+app.set('trust proxy', true)
 app.use(cors({ credentials: true, origin: ['https://vixcera.my.id', 'http://localhost:5173'] }));
 app.use(express.urlencoded({ extended: true }));
 app.use(compression())
@@ -19,4 +20,4 @@ app.use(cookieParser())
 app.use(express.static('public'));
 app.use(router);
 
-connectDB().then(() => app.listen((error) => { (error) ? console.log(error.msessage) : console.log('==> server running') }))
+connectDB().then(() => app.listen(3000, (error) => { (error) ? console.log(error.msessage) : console.log('==> server running') }))

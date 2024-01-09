@@ -5,7 +5,9 @@ import nodemailer from '../utils/nodemailer.js';
 import randomize from '../utils/randomize.js';
 
 export const contributor_login = async (request, response) => {
-  const agent = request.headers['user-agent'];
+  const ip = request.socket.remoteAddress || request.ip
+  const head = request.headers['user-agent']
+  const agent = ip + "" + head
   const { email, password } = request.body;
   const cont = await contributor.findOne({ email });
   if (!cont) return response.status(404).json('account not found');
@@ -49,7 +51,7 @@ export const contributor_register = async (request, response) => {
 
   if (email && username && password) {
     const token = jwt.sign({
-      id: randomize(),
+      id: randomize(3),
       email,
       username,
       password,
@@ -86,11 +88,12 @@ export const contributor_confirm = async (request, response) => {
 };
 
 export const contributor_logout = async (request, response) => {
-  const { reftoken } = request.cookies;
-  if (!reftoken) return response.status(403).json('Oops... Something Wrong!');
-  const cont = await contributor.findOne({ reftoken });
+  const ip = request.socket.remoteAddress || request.ip
+  const head = request.headers['user-agent']
+  const agent = ip + "" + head
+  const cont = await contributor.findOne({ agent });
   if (!cont) return response.status('you have been logged out!');
-  await contributor.updateOne({ reftoken }, { reftoken: null, agent: null });
+  await contributor.updateOne({ agent }, { reftoken: null, agent: null });
   response.clearCookie('reftoken');
   response.status(200).json('successfully logged out');
 };

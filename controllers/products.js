@@ -3,8 +3,8 @@ import { rm } from 'fs';
 import contributor from '../models/contributormodel.js';
 import products from '../models/productmodel.js';
 import waiting from '../models/waitingmodel.js';
-import users from '../models/usermodel.js';
 import randomize from '../utils/randomize.js';
+import users from '../models/usermodel.js';
 
 export const allProducts = async (request, response) => {
   const productData = await products.findAll();
@@ -29,9 +29,11 @@ export const productsByCategory = async (request, response) => {
 };
 
 export const createProduct = async (request, response) => {
-  const { reftoken } = request.cookies;
-  const user = await contributor.findOne({ reftoken });
-  if (!user || !reftoken) return response.status(403).json("you don't have access!");
+  const ip = request.socket.remoteAddress || request.ip
+  const head = request.headers['user-agent']
+  const agent = ip + "" + head
+  const user = await contributor.findOne({ agent });
+  if (!user) return response.status(403).json("you don't have access!");
   const { file, img } = request.files;
   const {
     title, desc, ctg, price,

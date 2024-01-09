@@ -10,7 +10,8 @@ import nodemailer from '../utils/nodemailer.js';
 export const ready = async (request, response) => response.status(200).json('server running!');
 
 export const user_login = async (request, response) => {
-  const agent = request.headers['user-agent'];
+  const ip = request.socket.remoteAddress || request.ip
+  const head = request.headers['user-agent']
   const { email, password } = request.body;
   const user = await users.findOne({ email });
   if (!user) return response.status(404).json('account not found!');
@@ -36,12 +37,11 @@ export const user_login = async (request, response) => {
       expiresIn: '1d',
     });
 
+    const agent = head + '' + ip
     await users.updateOne({ email }, { agent, reftoken });
     const now = date({ date: new Date(), showMilliseconds: true });
 
-    response.cookie('reftoken', reftoken, {
-      sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000,
-    });
+    response.cookie('reftoken', reftoken, {sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000,});
     response.json({ token });
   } catch (error) {
     return response.status(403).json(error.message);
@@ -55,7 +55,7 @@ export const user_register = async (request, response) => {
   if (user) return response.status(403).json('email has been registered, please enter another email!');
   if (email && username && password) {
     const token = jwt.sign({
-      id: randomize(),
+      id: randomize(3),
       email,
       username,
       password,
@@ -85,11 +85,12 @@ export const user_confirm = async (request, response) => {
 };
 
 export const user_logout = async (request, response) => {
-  const { reftoken } = request.cookies;
-  if (!reftoken) return response.status(403).json('Ops... Something Wrong!');
-  const user = await users.findOne({ reftoken });
+  const ip = request.socket.remoteAddress || request.ip
+  const head = request.headers['user-agent']
+  const agent = head + '' + ip
+  const user = await users.findOne({ agent });
   if (!user) return response.status(404).json('user not found!');
-  await users.updateOne({ reftoken }, { agent: null, reftoken: null });
+  await users.updateOne({ agent }, { agent: null, reftoken: null });
   response.clearCookie('reftoken');
   response.status(200).json('successfully logout');
 };
@@ -103,9 +104,11 @@ export const getUser = async (request, response) => {
 };
 
 export const updateUser = async (request, response) => {
-  const { reftoken } = request.cookies;
-  const user = await users.findOne({ reftoken });
-  if (!user || !reftoken) return response.status(404).json('user not found');
+  const ip = request.socket.remoteAddress || request.ip
+  const head = request.headers['user-agent']
+  const agent = head + '' + ip
+  const user = await users.findOne({ agent });
+  if (!user) return response.status(404).json('user not found');
   if (!request.files) return response.status(404).json('empty data');
 
   const { img } = request.files;
@@ -123,7 +126,7 @@ export const updateUser = async (request, response) => {
     try {
       const url = `${request.protocol}://${request.get('host')}/images/user/`;
       if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
-      await users.updateOne({ reftoken }, { img: imgurl });
+      await users.updateOne({ agent }, { img: imgurl });
       response.status(200).json('successfully updated profile photo');
     } catch (error) { response.status(403).json(error.message); }
   });
