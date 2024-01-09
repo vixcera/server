@@ -21,6 +21,7 @@ export const productById = async (request, response) => {
 export const productsByCategory = async (request, response) => {
   const { ctg } = request.params;
   const data = await products.find({ ctg }, {
+    _id : false,
     file : false,
   })
   if (!data) return response.status(404).json('products not found!');
