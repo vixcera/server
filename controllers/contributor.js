@@ -7,7 +7,7 @@ import randomize from '../utils/randomize.js';
 export const contributor_login = async (request, response) => {
   const ip = request.socket.remoteAddress || request.ip
   const head = request.headers['user-agent']
-  const agent = ip + "" + head
+  const agent = head + '' + ip
   const { email, password } = request.body;
   const cont = await contributor.findOne({ email });
   if (!cont) return response.status(404).json('account not found');
@@ -90,7 +90,7 @@ export const contributor_confirm = async (request, response) => {
 export const contributor_logout = async (request, response) => {
   const ip = request.socket.remoteAddress || request.ip
   const head = request.headers['user-agent']
-  const agent = ip + "" + head
+  const agent = head + '' + ip
   const cont = await contributor.findOne({ agent });
   if (!cont) return response.status('you have been logged out!');
   await contributor.updateOne({ agent }, { reftoken: null, agent: null });
