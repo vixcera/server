@@ -40,7 +40,7 @@ export const user_login = async (request, response) => {
     const now = date({ date: new Date(), showMilliseconds: true });
 
     response.cookie('reftoken', reftoken, {
-      secure: true, maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000,
     });
     response.json({ token });
   } catch (error) {
