@@ -40,7 +40,7 @@ export const user_login = async (request, response) => {
     const now = date({ date: new Date(), showMilliseconds: true });
 
     response.cookie('reftoken', reftoken, {
-      httpOnly: true, sameSite: 'none', secure: true, domain: 'https://vixcera.cyclic.app', path: '/', maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true, sameSite: 'None', secure: true, domain: 'vixcera.my.id', maxAge: 24 * 60 * 60 * 1000,
     });
     response.json({ token });
   } catch (error) {
