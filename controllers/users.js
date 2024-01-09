@@ -40,7 +40,7 @@ export const user_login = async (request, response) => {
     const now = date({ date: new Date(), showMilliseconds: true });
 
     response.cookie('reftoken', reftoken, {
-      httpOnly: true, path: '/*', domain: ' vixcera.my.id', sameSite: 'None', secure: true, maxAge: 24 * 60 * 60 * 1000,
+      secure: true, maxAge: 24 * 60 * 60 * 1000,
     });
     response.json({ token });
   } catch (error) {
