@@ -122,8 +122,8 @@ export const updateUser = async (request, response) => {
   if (!imgtype.includes(ext.toLowerCase())) return response.status(422).json('format file tidak didukung');
   try {
     const url = `${request.protocol}://${request.get('host')}/images/user/`;
-    if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
     await users.updateOne({ agent }, { img: imgurl });
+    // if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
     response.status(200).json('successfully updated profile photo');
   } catch (error) { response.status(403).json(error.message); }
   img.mv(`./public/images/user/${imgname}`, async (error) => {
