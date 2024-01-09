@@ -9,7 +9,7 @@ import router from './router/router.js';
 import connectDB from "./config/database.js"
 
 const app = express();
-const server = new https.createServer(app)
+const server = https.createServer(app)
 dotenv.config();
 
 app.enable("trust proxy")
