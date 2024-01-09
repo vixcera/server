@@ -4,10 +4,12 @@ import fileUpload from 'express-fileupload';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import https from "https";
 import router from './router/router.js';
 import connectDB from "./config/database.js"
 
 const app = express();
+const server = new https.createServer(app)
 dotenv.config();
 
 app.enable("trust proxy")
@@ -20,4 +22,4 @@ app.use(cookieParser())
 app.use(express.static('public'));
 app.use(router);
 
-connectDB().then(() => app.listen((error) => { (error) ? console.log(error.msessage) : console.log('==> server running') }))
+connectDB().then(() => server.listen((error) => { (error) ? console.log(error.msessage) : console.log('==> server running') }))
