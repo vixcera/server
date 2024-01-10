@@ -1,10 +1,7 @@
 import path from 'path';
 import { rm } from 'fs';
-import contributor from '../models/contributormodel.js';
-import products from '../models/productmodel.js';
-import waiting from '../models/waitingmodel.js';
 import randomize from '../utils/randomize.js';
-import users from '../models/usermodel.js';
+import { contributor, products, waiting, users } from '../models/models.js';
 
 export const allProducts = async (request, response) => {
   const productData = await products.findAll();
@@ -12,27 +9,24 @@ export const allProducts = async (request, response) => {
 };
 
 export const productById = async (request, response) => {
-  const { id } = request.params;
-  const data = await products.find({ id }, { file: false });
+  const { vid } = request.params;
+  const data = await products.findAll({ where: { vid }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid'] });
   if (!data) return response.status(404).json('product not found');
   response.status(200).json(data);
 };
 
 export const productsByCategory = async (request, response) => {
   const { ctg } = request.params;
-  const data = await products.find({ ctg }, {
-    _id : false,
-    file : false,
-  })
+  const data = await products.findAll({ where: { ctg }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid'] })
   if (!data) return response.status(404).json('products not found!');
   response.status(200).json(data);
 };
 
 export const createProduct = async (request, response) => {
-  const ip = request.socket.remoteAddress || request.ip
+  const ip = request.ip
   const head = request.headers['user-agent']
-  const agent = ip + "" + head
-  const user = await contributor.findOne({ agent });
+  const agent = head + "" + ip
+  const user = await contributor.findOne({ where: { agent } });
   if (!user) return response.status(403).json("you don't have access!");
   const { file, img } = request.files;
   const {
@@ -64,7 +58,7 @@ export const createProduct = async (request, response) => {
 
   try {
     await waiting.create({
-      title, desc, price, ctg, img: imgUrl, file: fileUrl, by: user.username, id: randomize(),
+      title, desc, price, ctg, img: imgUrl, file: fileUrl, by: user.username, vid: randomize(5),
     });
     img.mv(imgPath);
     file.mv(filePath);
@@ -77,20 +71,20 @@ export const createProduct = async (request, response) => {
 export const waitingList = async (request, response) => {
   const { password } = request.body;
   if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
-  const data = await waiting.find();
+  const data = await waiting.findAll();
   response.status(200).json(data);
 };
 
 export const confirmProduct = async (request, response) => {
   const { password } = request.body;
   if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
-  const data = await waiting.findOne({ id: request.body.id });
+  const data = await waiting.findOne({ where: { vid: request.body.vid } });
   if (!data) return response.status(404).json('product data not found');
   try {
     await products.create({
-      id: data.id, price: data.price, title: data.title, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
+      vid: data.vid, price: data.price, title: data.title, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
     });
-    await waiting.findOneAndDelete({ id: request.body.id });
+    await waiting.destroy({ where: { vid: request.body.vid } })
     return response.status(201).json('product verification successful');
   } catch (error) {
     return response.status(433).json(error.message);
@@ -100,10 +94,10 @@ export const confirmProduct = async (request, response) => {
 export const rejectProduct = async (request, response) => {
   const { password } = request.body;
   if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
-  const data = await waiting.findOne({ id: request.body.id });
+  const data = await waiting.findOne({ where: { vid: request.body.vid } });
   if (!data) return response.status(404).json('product data not found');
   try {
-    await waiting.findOneAndDelete({ id: request.body.id });
+    await waiting.destroy({ where: { id: request.body.id } });
     const fileUrl = `${request.protocol}://${request.get('host')}/files/`;
     const imgUrl = `${request.protocol}://${request.get('host')}/images/product/`;
     rm(`./public/images/product/${data.img.slice(imgUrl.length)}`, (error) => error && console.log(error.message));

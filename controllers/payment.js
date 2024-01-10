@@ -1,5 +1,5 @@
 import midtrans from 'midtrans-client';
-import products from "../models/productmodel.js"
+import { products } from '../models/models.js';
 import randomize from '../utils/randomize.js';
 
 export const placeOrder = async (request, response) => {
@@ -9,7 +9,7 @@ export const placeOrder = async (request, response) => {
   if (!name || !email || !phone) return response.status(403).json('please complete the data!');
   if (!email.includes('@gmail.com')) return response.status(403).json('please input a valid email!');
 
-  const product = await products.findOne({ id });
+  const product = await products.findOne({ where: { id } });
   if (!product) return response.status(404).json('product not found!');
   const orderId = randomize(5)
 

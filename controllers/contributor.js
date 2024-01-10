@@ -1,22 +1,22 @@
 import jwt from 'jsonwebtoken';
 import bcyrpt from 'bcryptjs';
-import contributor from '../models/contributormodel.js';
+import { contributor } from '../models/models.js';
 import nodemailer from '../utils/nodemailer.js';
 import randomize from '../utils/randomize.js';
 
 export const contributor_login = async (request, response) => {
-  const ip = request.socket.remoteAddress || request.ip
+  const ip = request.ip
   const head = request.headers['user-agent']
   const agent = head + '' + ip
   const { email, password } = request.body;
-  const cont = await contributor.findOne({ email });
+  const cont = await contributor.findOne({ where: { email } });
   if (!cont) return response.status(404).json('account not found');
   try {
     const match = await bcyrpt.compare(password, cont.password);
     if (!match) return response.status(403).json("password doesn't match!");
 
     const token = jwt.sign({
-      id: cont.id,
+      vid: cont.vid,
       img: cont.img,
       email: cont.email,
       username: cont.username,
@@ -26,16 +26,15 @@ export const contributor_login = async (request, response) => {
     });
 
     const reftoken = jwt.sign({
-      id: cont.id,
+      vid: cont.vid,
       img: cont.img,
       email: cont.email,
       username: cont.username,
-      password: cont.password,
     }, process.env.reftoken, {
       expiresIn: '1d',
     });
 
-    await contributor.updateOne({ email }, { reftoken, agent });
+    await contributor.update({ agent, reftoken }, { where: { email } })
     response.cookie('reftoken', reftoken, { httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 });
     response.json({ token });
   } catch (error) {
@@ -45,13 +44,13 @@ export const contributor_login = async (request, response) => {
 
 export const contributor_register = async (request, response) => {
   const { username, email, password } = request.body;
-  const cont = await contributor.findOne({ email });
+  const cont = await contributor.findOne({ where: { email } });
   if (!email.includes('@gmail.com')) return response.status(403).json('please input a valid email!');
   if (cont) return response.status(302).json('email has been registered, please enter another email!');
 
   if (email && username && password) {
     const token = jwt.sign({
-      id: randomize(3),
+      vid: randomize(3),
       email,
       username,
       password,
@@ -73,12 +72,12 @@ export const contributor_confirm = async (request, response) => {
     if (error) return response.status(400).json(error.message);
 
     const data = jwt.decode(token);
-    const cont = await contributor.findOne({ email: data.email });
+    const cont = await contributor.findOne({ where: { email: data.email } });
     if (cont) return response.status(403).redirect(`${process.env.clientUrl}/login/contributor`);
     const salt = await bcyrpt.genSalt();
     const hash = await bcyrpt.hash(data.password, salt);
     await contributor.create({
-      id: data.id,
+      vid: data.vid,
       email: data.email,
       username: data.username,
       password: hash,
@@ -88,12 +87,12 @@ export const contributor_confirm = async (request, response) => {
 };
 
 export const contributor_logout = async (request, response) => {
-  const ip = request.socket.remoteAddress || request.ip
+  const ip = request.ip
   const head = request.headers['user-agent']
   const agent = head + '' + ip
   const cont = await contributor.findOne({ agent });
   if (!cont) return response.status('you have been logged out!');
-  await contributor.updateOne({ agent }, { reftoken: null, agent: null });
+  await contributor.update({ agent: null, reftoken: null }, { where: { agent } });
   response.clearCookie('reftoken');
   response.status(200).json('successfully logged out');
 };

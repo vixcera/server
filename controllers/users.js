@@ -3,24 +3,28 @@ import { rm } from 'fs';
 import path from 'path';
 import date from 'date-time';
 import bcyrpt from 'bcryptjs';
-import users from '../models/usermodel.js';
-import randomize from '../utils/randomize.js';
+import { contributor, users } from "../models/models.js"
 import nodemailer from '../utils/nodemailer.js';
+import randomize from '../utils/randomize.js';
 
-export const ready = async (request, response) => response.status(200).json('server running!');
+export const ready = async (request, response) => {
+  const reftoken = request.cookies.reftoken
+  console.log(reftoken)
+  response.status(200).json({reftoken})
+};
 
 export const user_login = async (request, response) => {
-  const ip = request.socket.remoteAddress || request.ip
+  const ip = request.ip
   const head = request.headers['user-agent']
   const { email, password } = request.body;
-  const user = await users.findOne({ email });
+  const user = await users.findOne({ where: { email } });
   if (!user) return response.status(404).json('account not found!');
   try {
     const match = await bcyrpt.compare(password, user.password);
     if (!match) return response.status(403).json("password doesn't match!");
 
     const token = jwt.sign({
-      id: user.id,
+      vid: user.vid,
       img: user.img,
       email: user.email,
       username: user.username,
@@ -30,7 +34,7 @@ export const user_login = async (request, response) => {
     });
 
     const reftoken = jwt.sign({
-      id: user.id,
+      vid: user.vid,
       email: user.email,
       username: user.username,
     }, process.env.reftoken, {
@@ -38,10 +42,10 @@ export const user_login = async (request, response) => {
     });
 
     const agent = head + '' + ip
-    await users.updateOne({ email }, { agent, reftoken });
+    await users.update({ reftoken, agent }, { where: { email } })
     const now = date({ date: new Date(), showMilliseconds: true });
 
-    response.cookie('reftoken', reftoken, {sameSite: 'none', secure: true, maxAge: 24 * 60 * 60 * 1000,});
+    response.cookie('reftoken', reftoken, {httpOnly: true, sameSite: 'none', maxAge: 24 * 60 * 60 * 1000,});
     response.json({ token });
   } catch (error) {
     return response.status(403).json(error.message);
@@ -50,18 +54,17 @@ export const user_login = async (request, response) => {
 
 export const user_register = async (request, response) => {
   const { email, username, password } = request.body;
-  const user = await users.findOne({ email });
+  const user = await users.findOne({ where: { email } });
   if (!email.includes('@gmail.com')) return response.status(422).json('please input a valid email!');
   if (user) return response.status(403).json('email has been registered, please enter another email!');
   if (email && username && password) {
     const token = jwt.sign({
-      id: randomize(3),
+      vid : randomize(3),
       email,
       username,
       password,
     }, process.env.token);
     const url = `${request.protocol}://${request.get("host")}/confirm/user/${token}`;
-    console.log(url);
     nodemailer(email, username, url, response);
   } else return response.status(403).json('data is incomplete, please complete the data!');
 };
@@ -73,24 +76,25 @@ export const user_confirm = async (request, response) => {
   jwt.verify(token, process.env.token, async (error) => {
     if (error) return response.status(403).json(error.message);
     const data = jwt.decode(token);
-    const user = await users.findOne({ email: data.email });
+    const user = await users.findOne({ where: { email: data.email } });
     if (user) return response.status(403).redirect(`${process.env.clientUrl}/login`);
     const salt = await bcyrpt.genSalt();
     const hash = await bcyrpt.hash(data.password, salt);
     await users.create({
-      id: data.id, username: data.username, password: hash, email: data.email,
+      username: data.username, password: hash, email: data.email, vid: data.vid
     });
     response.status(201).redirect(`${process.env.clientUrl}/login`);
   });
 };
 
 export const user_logout = async (request, response) => {
-  const ip = request.socket.remoteAddress || request.ip
+  const ip = request.ip
   const head = request.headers['user-agent']
   const agent = head + '' + ip
-  const user = await users.findOne({ agent });
-  if (!user) return response.status(404).json('user not found!');
-  await users.updateOne({ agent }, { agent: null, reftoken: null });
+  const user = await users.findOne({ where: { agent } })
+  const cont = await contributor.findOne({ where: { agent } })
+  if (user) await users.update({ reftoken: null, agent: null }, { where: { agent } })
+  if (cont) await contributor.update({ reftoken: null, agent: null }, { where: { agent } })
   response.clearCookie('reftoken');
   response.status(200).json('successfully logout');
 };
@@ -104,10 +108,10 @@ export const getUser = async (request, response) => {
 };
 
 export const updateUser = async (request, response) => {
-  const ip = request.socket.remoteAddress || request.ip
+  const ip = request.ip
   const head = request.headers['user-agent']
   const agent = head + '' + ip
-  const user = await users.findOne({ agent });
+  const user = await users.findOne({ where: { agent } });
   if (!user) return response.status(404).json('user not found');
   if (!request.files) return response.status(404).json('empty data');
 
@@ -120,13 +124,14 @@ export const updateUser = async (request, response) => {
   if (!img) return response.status(404).json('empty file');
   if (imgsize > 5000000) return response.status(403).json('file size must be less than 5 MB');
   if (!imgtype.includes(ext.toLowerCase())) return response.status(422).json('format file tidak didukung');
-  try {
-    const url = `${request.protocol}://${request.get('host')}/images/user/`;
-    await users.updateOne({ agent }, { img: imgurl });
-    // if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
-    response.status(200).json('successfully updated profile photo');
-  } catch (error) { response.status(403).json(error.message); }
+  
   img.mv(`./public/images/user/${imgname}`, async (error) => {
     if (error) throw error;
+    try {
+      const url = `${request.protocol}://${request.get('host')}/images/user/`;
+      if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
+      await users.update({ img: imgurl }, { where : { agent } })
+      response.status(200).json('successfully updated profile photo');
+    } catch (error) { response.status(403).json(error.message); }
   });
 };

@@ -33,7 +33,7 @@ router.get('/logout/contributor', contributor_logout);
 // AUTHENTICATION ROUTES
 router.post('/payments', placeOrder);
 router.get('/reftoken', reftoken);
-router.get('/administrator', administrator);
+router.get('/administrator', verifyToken);
 
 // PRODUCT ROUTES
 router.get('/products', allProducts);
@@ -44,6 +44,6 @@ router.post('/product/reject', rejectProduct);
 router.post('/product/confirm', confirmProduct);
 router.post('/products/waitinglist', waitingList);
 router.get('/products/:ctg', productsByCategory);
-router.get('/products/id/:id', productById);
+router.get('/products/vid/:vid', productById);
 
 export default router;
