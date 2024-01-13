@@ -3,20 +3,18 @@ import { rm } from 'fs';
 import path from 'path';
 import date from 'date-time';
 import bcyrpt from 'bcryptjs';
+import detector from '../utils/detector.js';
 import { contributor, users } from "../models/models.js"
 import nodemailer from '../utils/nodemailer.js';
 import randomize from '../utils/randomize.js';
 
 export const ready = async (request, response) => {
-  const reftoken = request.cookies.reftoken
-  console.log(reftoken)
-  response.status(200).json({reftoken})
+  response.status(200).redirect(`${process.env.clientUrl}`)
 };
 
 export const user_login = async (request, response) => {
-  const ip = request.ip
-  const head = request.headers['user-agent']
-  const { email, password } = request.body;
+  const agent = request.headers['user-agent'] + '' + request.ip
+  const { email , password } = request.body;
   const user = await users.findOne({ where: { email } });
   if (!user) return response.status(404).json('account not found!');
   try {
@@ -41,11 +39,10 @@ export const user_login = async (request, response) => {
       expiresIn: '1d',
     });
 
-    const agent = head + '' + ip
     await users.update({ reftoken, agent }, { where: { email } })
     const now = date({ date: new Date(), showMilliseconds: true });
 
-    response.cookie('reftoken', reftoken, {httpOnly: true, sameSite: 'none', maxAge: 24 * 60 * 60 * 1000,});
+    response.cookie('reftoken', reftoken, {httpOnly: true, sameSite:"none", secure:true, maxAge: 24 * 60 * 60 * 1000,});
     response.json({ token });
   } catch (error) {
     return response.status(403).json(error.message);
@@ -88,9 +85,7 @@ export const user_confirm = async (request, response) => {
 };
 
 export const user_logout = async (request, response) => {
-  const ip = request.ip
-  const head = request.headers['user-agent']
-  const agent = head + '' + ip
+  const agent = request.headers['user-agent'] + '' + request.ip
   const user = await users.findOne({ where: { agent } })
   const cont = await contributor.findOne({ where: { agent } })
   if (user) await users.update({ reftoken: null, agent: null }, { where: { agent } })
@@ -108,9 +103,7 @@ export const getUser = async (request, response) => {
 };
 
 export const updateUser = async (request, response) => {
-  const ip = request.ip
-  const head = request.headers['user-agent']
-  const agent = head + '' + ip
+  const agent = request.headers['user-agent'] + '' + request.ip
   const user = await users.findOne({ where: { agent } });
   if (!user) return response.status(404).json('user not found');
   if (!request.files) return response.status(404).json('empty data');

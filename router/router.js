@@ -1,20 +1,14 @@
 import express from 'express';
+import detector from '../utils/detector.js';
 import reftoken from '../utils/reftoken.js';
 import verifyToken from '../middleware/verifyToken.js';
 import { placeOrder } from '../controllers/payment.js';
-import { administrator } from '../controllers/administrator.js';
-import {
-  updateUser, getUser, ready, user_login, user_register, user_confirm, user_logout,
-} from '../controllers/users.js';
-import {
-  contributor_confirm, contributor_login, contributor_logout, contributor_register,
-} from '../controllers/contributor.js';
-import {
-  allProducts, confirmProduct, createProduct, deleteProduct, downloadProduct, productById, productsByCategory, rejectProduct, waitingList,
-} from '../controllers/products.js';
+import { updateUser, getUser, ready, user_login, user_register, user_confirm, user_logout } from '../controllers/users.js';
+import { contributor_confirm, contributor_login, contributor_logout, contributor_register } from '../controllers/contributor.js';
+import { allProducts, confirmProduct, createProduct, deleteProduct, downloadProduct, productById, productsByCategory, rejectProduct, waitingList } from '../controllers/products.js';
 
 const router = new express.Router();
-router.get('/', ready);
+router.get('/', detector, ready);
 
 // USERS ROUTES
 router.get('/user/:id', verifyToken, getUser);
@@ -32,7 +26,7 @@ router.get('/logout/contributor', contributor_logout);
 
 // AUTHENTICATION ROUTES
 router.post('/payments', placeOrder);
-router.get('/reftoken', reftoken);
+router.get('/reftoken', detector, reftoken);
 router.get('/administrator', verifyToken);
 
 // PRODUCT ROUTES

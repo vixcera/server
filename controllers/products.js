@@ -23,9 +23,7 @@ export const productsByCategory = async (request, response) => {
 };
 
 export const createProduct = async (request, response) => {
-  const ip = request.ip
-  const head = request.headers['user-agent']
-  const agent = head + "" + ip
+  const agent = request.headers['user-agent'] + '' + request.ip
   const user = await contributor.findOne({ where: { agent } });
   if (!user) return response.status(403).json("you don't have access!");
   const { file, img } = request.files;
@@ -97,7 +95,7 @@ export const rejectProduct = async (request, response) => {
   const data = await waiting.findOne({ where: { vid: request.body.vid } });
   if (!data) return response.status(404).json('product data not found');
   try {
-    await waiting.destroy({ where: { id: request.body.id } });
+    await waiting.destroy({ where: { vid: request.body.vid } });
     const fileUrl = `${request.protocol}://${request.get('host')}/files/`;
     const imgUrl = `${request.protocol}://${request.get('host')}/images/product/`;
     rm(`./public/images/product/${data.img.slice(imgUrl.length)}`, (error) => error && console.log(error.message));
