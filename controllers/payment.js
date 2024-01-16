@@ -1,8 +1,9 @@
 import midtrans from 'midtrans-client';
-import { products } from '../models/models.js';
 import randomize from '../utils/randomize.js';
+import { products } from '../models/models.js';
 
-export const placeOrder = async (request, response) => {
+const placeOrder = async (request, response) => {
+
   const {
     id, name, email, phone,
   } = request.body;
@@ -47,3 +48,5 @@ export const placeOrder = async (request, response) => {
       console.log('transactionToken:', transactionToken);
     });
 };
+
+export default placeOrder;

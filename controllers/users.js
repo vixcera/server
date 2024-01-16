@@ -3,7 +3,6 @@ import { rm } from 'fs';
 import path from 'path';
 import date from 'date-time';
 import bcyrpt from 'bcryptjs';
-import detector from '../utils/detector.js';
 import { contributor, users } from "../models/models.js"
 import nodemailer from '../utils/nodemailer.js';
 import randomize from '../utils/randomize.js';
@@ -26,7 +25,6 @@ export const user_login = async (request, response) => {
       img: user.img,
       email: user.email,
       username: user.username,
-      password: user.password,
     }, process.env.token, {
       expiresIn: '20s',
     });
@@ -41,8 +39,9 @@ export const user_login = async (request, response) => {
 
     await users.update({ reftoken, agent }, { where: { email } })
     const now = date({ date: new Date(), showMilliseconds: true });
+    console.log(`==> new user login : ${email} \t (${now})`)
 
-    response.cookie('reftoken', reftoken, {httpOnly: true, sameSite:"none", secure:true, maxAge: 24 * 60 * 60 * 1000,});
+    response.cookie('reftoken', reftoken, {httpOnly: true, sameSite:"None", secure:true, maxAge: 24 * 60 * 60 * 1000,});
     response.json({ token });
   } catch (error) {
     return response.status(403).json(error.message);
@@ -80,6 +79,7 @@ export const user_confirm = async (request, response) => {
     await users.create({
       username: data.username, password: hash, email: data.email, vid: data.vid
     });
+    console.log(`==> new user confirmed: ${data.email}`)
     response.status(201).redirect(`${process.env.clientUrl}/login`);
   });
 };
@@ -103,8 +103,8 @@ export const getUser = async (request, response) => {
 };
 
 export const updateUser = async (request, response) => {
-  const agent = request.headers['user-agent'] + '' + request.ip
-  const user = await users.findOne({ where: { agent } });
+  const reftoken = request.cookies.reftoken
+  const user = await users.findOne({ where: { reftoken } });
   if (!user) return response.status(404).json('user not found');
   if (!request.files) return response.status(404).json('empty data');
 
@@ -123,7 +123,7 @@ export const updateUser = async (request, response) => {
     try {
       const url = `${request.protocol}://${request.get('host')}/images/user/`;
       if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
-      await users.update({ img: imgurl }, { where : { agent } })
+      await users.update({ img: imgurl }, { where : { reftoken } })
       response.status(200).json('successfully updated profile photo');
     } catch (error) { response.status(403).json(error.message); }
   });

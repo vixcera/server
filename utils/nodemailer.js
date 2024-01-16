@@ -3,6 +3,7 @@ import mailer from 'nodemailer';
 const nodemailer = async (email, username, url, response) => {
   const tranporter = mailer.createTransport({
     port: 465,
+    secure: true,
     service: 'gmail',
     host: 'smtp.gmail.com',
     auth:
@@ -27,6 +28,7 @@ const nodemailer = async (email, username, url, response) => {
   };
   tranporter.sendMail(options, (error) => {
     if (error) return console.log(error.message);
+    console.log(`==> New user register: ${email}`)
     return response.status(200).json('email verification was sent successfully, please check your email.');
   });
 };

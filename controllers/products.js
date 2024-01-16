@@ -52,7 +52,7 @@ export const createProduct = async (request, response) => {
   const filePath = `./public/files/${fileName}`;
   const fileUrl = `${request.protocol}://${request.get('host')}/files/${fileName}`;
   if (!fileType.includes(fileExt.toLowerCase())) return response.status(403).json('file format is not supported');
-  if (fileSize > 5000000 * 2) return response.status(403).json('file size must be less than 20 MB');
+  if (fileSize > 5000000 * 4) return response.status(403).json('file size must be less than 20 MB');
 
   try {
     await waiting.create({

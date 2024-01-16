@@ -12,23 +12,23 @@ import hpp from "hpp"
 import fs from "fs"
 
 const options = {
-    key  : fs.readFileSync('./certificate/localhost-key.pem'),
-    cert : fs.readFileSync('./certificate/localhost.pem')
+    key  : fs.readFileSync('./certificate/vixcera.com-key.pem'),
+    cert : fs.readFileSync('./certificate/vixcera.com.pem')
 }
 
 const cspoptions = {
     directives : {
-        defaultSrc  : ["'self'"],
+        defaultSrc  : [ "'self'" ],
         scriptSrc   : [ "'self'" ],
         styleSrc    : [ "'self'", "'unsafe-inline'" ],
-        imgSrc      : [ "'self'", "vixcera.my.id"]
+        imgSrc      : [ "vixcera.my.id"]
     }
 }
 
 const corsoptions = {
     credentials     : true,
     methods         : ['GET', 'PUT', 'POST', "DELETE"],
-    origin          : ["https://vixcera.my.id", "http://localhost:5173/"],
+    origin          : ["https://vixcera.my.id", "http://localhost:5173"],
     exposedHeaders  : ["set-cookie"]
 }
 
@@ -60,5 +60,5 @@ app.use(router);
 
 db.authenticate()
 .then(() => console.log("==> database connected"))
-.catch((error) => console.log(error))
-serverhttp.listen(port, (error) => { (error) ? console.log(error.msessage) : console.log('==> server running') })
+.catch((error) => console.log(error.message))
+serverhttps.listen(port, (error) => { (error) ? console.log(error.msessage) : console.log('==> server running') })
