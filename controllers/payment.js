@@ -4,13 +4,11 @@ import { products } from '../models/models.js';
 
 const placeOrder = async (request, response) => {
 
-  const {
-    id, name, email, phone,
-  } = request.body;
+  const { vid, name, email, phone } = request.body;
   if (!name || !email || !phone) return response.status(403).json('please complete the data!');
   if (!email.includes('@gmail.com')) return response.status(403).json('please input a valid email!');
 
-  const product = await products.findOne({ where: { id } });
+  const product = await products.findOne({ where: { vid } });
   if (!product) return response.status(404).json('product not found!');
   const orderId = randomize(5)
 
@@ -28,7 +26,7 @@ const placeOrder = async (request, response) => {
       secure: true,
     },
     item_details: {
-      id: `${product.id}`,
+      id: `${product.vid}`,
       name: `${product.title}`,
       price: `${product.price}`,
       quantity: '1',

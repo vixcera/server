@@ -2,7 +2,7 @@ import express from 'express';
 import detector from '../utils/detector.js';
 import placeOrder  from '../controllers/payment.js';
 import verifyToken from '../middleware/verifyToken.js';
-import { shareCookie, checkAllowedCookie, reftoken } from "../controllers/rules.js"
+import { checkAllowedCookie, reftoken } from "../controllers/rules.js"
 import { updateUser, getUser, ready, user_login, user_register, user_confirm, user_logout } from '../controllers/users.js';
 import { contributor_confirm, contributor_login, contributor_logout, contributor_register } from '../controllers/contributor.js';
 import { allProducts, confirmProduct, createProduct, deleteProduct, downloadProduct, productById, productsByCategory, rejectProduct, waitingList } from '../controllers/products.js';
@@ -26,7 +26,6 @@ router.get('/logout/contributor', contributor_logout);
 
 // AUTHENTICATION ROUTES
 router.post('/payments', placeOrder);
-router.get('/getcookie', shareCookie);
 router.get('/administrator', verifyToken);
 router.get('/reftoken', detector, reftoken);
 router.get('/checkcookie', checkAllowedCookie)

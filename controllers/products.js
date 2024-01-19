@@ -10,29 +10,28 @@ export const allProducts = async (request, response) => {
 
 export const productById = async (request, response) => {
   const { vid } = request.params;
-  const data = await products.findAll({ where: { vid }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid'] });
+  const data = await products.findAll({ where: { vid }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid', 'ctg', 'createdAt', 'tech'] });
   if (!data) return response.status(404).json('product not found');
   response.status(200).json(data);
 };
 
 export const productsByCategory = async (request, response) => {
   const { ctg } = request.params;
-  const data = await products.findAll({ where: { ctg }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid'] })
+  const data = await products.findAll({ where: { ctg }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid', 'tech', 'ctg'] })
   if (!data) return response.status(404).json('products not found!');
   response.status(200).json(data);
 };
 
 export const createProduct = async (request, response) => {
-  const agent = request.headers['user-agent'] + '' + request.ip
-  const user = await contributor.findOne({ where: { agent } });
+  const reftoken = request.cookies.reftoken
+  if (!reftoken) return response.status(403).json("you don't have access!")
+  const user = await contributor.findOne({ where: { reftoken } });
   if (!user) return response.status(403).json("you don't have access!");
   const { file, img } = request.files;
-  const {
-    title, desc, ctg, price,
-  } = request.body;
-  if (!title || !desc || !ctg || !price || !file || !img) return response.status(403).json('please complete the data!');
+  const { title, desc, ctg, price, tech } = request.body;
+  if (!title || !desc || !ctg || !price || !file || !img || !tech ) return response.status(403).json('please complete the data!');
   if (ctg !== 'web' && ctg !== 'video' && ctg !== 'vector') return response.status(403).json('category not available');
-  if (desc.length <= 30 || desc.length >= 70) return response.status(422).json('description Min 30 - Max 70 character');
+  if (desc.length <= 30 || desc.length >= 100) return response.status(422).json('description Min 30 - Max 100 character');
 
   // handle image
   const imgType = ['.jpg', '.png', '.jpeg', '.mp4', '.mov'];
@@ -56,7 +55,7 @@ export const createProduct = async (request, response) => {
 
   try {
     await waiting.create({
-      title, desc, price, ctg, img: imgUrl, file: fileUrl, by: user.username, vid: randomize(5),
+      title, tech, desc, price, ctg, img: imgUrl, file: fileUrl, by: user.username, vid: randomize(5),
     });
     img.mv(imgPath);
     file.mv(filePath);
@@ -80,7 +79,7 @@ export const confirmProduct = async (request, response) => {
   if (!data) return response.status(404).json('product data not found');
   try {
     await products.create({
-      vid: data.vid, price: data.price, title: data.title, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
+      vid: data.vid, price: data.price, title: data.title, tech: data.tech, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
     });
     await waiting.destroy({ where: { vid: request.body.vid } })
     return response.status(201).json('product verification successful');

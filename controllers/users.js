@@ -12,7 +12,7 @@ export const ready = async (request, response) => {
 };
 
 export const user_login = async (request, response) => {
-  const agent = request.headers['user-agent'] + '' + request.ip
+  const agent = request.headers['user-agent']
   const { email , password } = request.body;
   const user = await users.findOne({ where: { email } });
   if (!user) return response.status(404).json('account not found!');
@@ -59,37 +59,37 @@ export const user_register = async (request, response) => {
       email,
       username,
       password,
-    }, process.env.token);
-    const url = `${request.protocol}://${request.get("host")}/confirm/user/${token}`;
+    }, process.env.token, { expiresIn: '1h' });
+    const url = `${process.env.clientUrl}/confirm/user/${token}`;
     nodemailer(email, username, url, response);
   } else return response.status(403).json('data is incomplete, please complete the data!');
 };
 
 export const user_confirm = async (request, response) => {
   const { token } = request.params;
-  if (!token) return response.status(404).json('data not found');
+  if (!token) return response.status(404).json("forbidden request");
 
   jwt.verify(token, process.env.token, async (error) => {
     if (error) return response.status(403).json(error.message);
     const data = jwt.decode(token);
     const user = await users.findOne({ where: { email: data.email } });
-    if (user) return response.status(403).redirect(`${process.env.clientUrl}/login`);
+    if (user) return response.status(403).json("already created");
     const salt = await bcyrpt.genSalt();
     const hash = await bcyrpt.hash(data.password, salt);
     await users.create({
       username: data.username, password: hash, email: data.email, vid: data.vid
     });
     console.log(`==> new user confirmed: ${data.email}`)
-    response.status(201).redirect(`${process.env.clientUrl}/login`);
+    response.status(201).json("account created")
   });
 };
 
 export const user_logout = async (request, response) => {
-  const agent = request.headers['user-agent'] + '' + request.ip
-  const user = await users.findOne({ where: { agent } })
-  const cont = await contributor.findOne({ where: { agent } })
-  if (user) await users.update({ reftoken: null, agent: null }, { where: { agent } })
-  if (cont) await contributor.update({ reftoken: null, agent: null }, { where: { agent } })
+  const reftoken = request.cookies.reftoken
+  const user = await users.findOne({ where: { reftoken } })
+  const cont = await contributor.findOne({ where: { reftoken } })
+  if (user) await users.update({ reftoken: null, agent: null }, { where: { reftoken } })
+  if (cont) await contributor.update({ reftoken: null, agent: null }, { where: { reftoken } })
   response.clearCookie('reftoken');
   response.status(200).json('successfully logout');
 };

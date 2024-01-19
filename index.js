@@ -1,15 +1,19 @@
 import fileUpload from 'express-fileupload';
 import cookieParser from 'cookie-parser';
-import router from './router/router.js';
-import db from "./config/database.js"
 import express from 'express';
 import helmet from "helmet"
 import dotenv from 'dotenv';
+import csurf from 'csurf';
 import https from "https";
 import http from "http";
 import cors from 'cors';
 import hpp from "hpp"
 import fs from "fs"
+import country from "./security/country.js"
+
+import router from './router/router.js';
+import redos from './security/redos.js';
+import db from "./config/database.js"
 
 const options = {
     key  : fs.readFileSync('./certificate/vixcera.com-key.pem'),
@@ -21,7 +25,7 @@ const cspoptions = {
         defaultSrc  : [ "'self'" ],
         scriptSrc   : [ "'self'" ],
         styleSrc    : [ "'self'", "'unsafe-inline'" ],
-        imgSrc      : [ "vixcera.my.id"]
+        imgSrc      : [ "vixcera.my.id", "api.vixcera.bid" ]
     }
 }
 
@@ -29,7 +33,21 @@ const corsoptions = {
     credentials     : true,
     methods         : ['GET', 'PUT', 'POST', "DELETE"],
     origin          : ["https://vixcera.my.id", "http://localhost:5173"],
-    exposedHeaders  : ["set-cookie"]
+}
+
+const hstsoptions = {
+    maxAge            : 31536000,
+    includesubdomains : true
+}
+
+const csrfoptions = {
+    cookie : {
+        sameSite : "None",
+        httpOnly : true,
+        secure   : true,
+        maxAge   : 900000,
+        key      : "VXSRF"
+    }
 }
 
 dotenv.config();
@@ -42,23 +60,27 @@ const serverhttp = new http.createServer(app)
 app.enable("trust proxy", 1)
 app.disable('x-powered-by')
 
-app.use(cors(corsoptions));
-app.use(cookieParser());
-app.use(hpp())
+app.use( cors(corsoptions));
+app.use( cookieParser());
+app.use( hpp())
+// app.use( csurf(csrfoptions));
 
 app.use( helmet.contentSecurityPolicy(cspoptions));
-app.use( helmet.xssFilter( { setOnOldIE: true }));
-app.use( helmet.hsts( { maxAge: 7776000000 }));
-app.use( helmet.frameguard( 'SAMEORIGIN' ));
-app.use( helmet.noSniff() ) ;
+app.use( helmet.frameguard({action: "sameorigin"}));
+app.use( helmet.hsts(hstsoptions));
+app.use( helmet.xssFilter());
+app.use( helmet.noSniff());
 
-app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
-app.use(express.json());
 app.use(express.static('public'));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+app.use(country)
+app.use(redos)
 app.use(router);
 
 db.authenticate()
-.then(() => console.log("==> database connected"))
-.catch((error) => console.log(error.message))
+.then( () => console.log("==> database connected"))
+.catch( (error) => console.log(error.message))
 serverhttps.listen(port, (error) => { (error) ? console.log(error.msessage) : console.log('==> server running') })
