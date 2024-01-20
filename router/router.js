@@ -1,44 +1,16 @@
 import express from 'express';
-import detector from '../utils/detector.js';
-import placeOrder  from '../controllers/payment.js';
-import verifyToken from '../middleware/verifyToken.js';
-import { checkAllowedCookie, reftoken } from "../controllers/rules.js"
-import { updateUser, getUser, ready, user_login, user_register, user_confirm, user_logout } from '../controllers/users.js';
-import { contributor_confirm, contributor_login, contributor_logout, contributor_register } from '../controllers/contributor.js';
-import { allProducts, confirmProduct, createProduct, deleteProduct, downloadProduct, productById, productsByCategory, rejectProduct, waitingList } from '../controllers/products.js';
+import ruser from './ruser.js';
+import rproduct from "./rproduct.js"
+import logger from "../utils/logger.js";
+import rauthentic from './rauthentic.js';
+import rcontributor from './rcontributor.js';
 
 const router = new express.Router();
-router.get('/', detector, ready);
 
-// USERS ROUTES
-router.get('/user/:id', verifyToken, getUser);
-router.get('/confirm/user/:token', user_confirm);
-router.post('/register', user_register);
-router.put('/user/update', updateUser);
-router.get('/logout', user_logout);
-router.post('/login', user_login);
-
-// CONTRIBUTOR ROUTES
-router.get('/confirm/contributor/:token', contributor_confirm);
-router.post('/register/contributor', contributor_register);
-router.post('/login/contributor', contributor_login);
-router.get('/logout/contributor', contributor_logout);
-
-// AUTHENTICATION ROUTES
-router.post('/payments', placeOrder);
-router.get('/administrator', verifyToken);
-router.get('/reftoken', detector, reftoken);
-router.get('/checkcookie', checkAllowedCookie)
-
-// PRODUCT ROUTES
-router.get('/products', allProducts);
-router.post('/product', createProduct);
-router.delete('/product/:id', deleteProduct);
-router.get('/download/:id', downloadProduct);
-router.post('/product/reject', rejectProduct);
-router.post('/product/confirm', confirmProduct);
-router.post('/products/waitinglist', waitingList);
-router.get('/products/:ctg', productsByCategory);
-router.get('/products/vid/:vid', productById);
+router.use(logger)
+router.use(ruser)          // ==> user routes
+router.use(rproduct)       // ==> product routes
+router.use(rauthentic)     // ==> authentication routes 
+router.use(rcontributor)   // ==> contributor routes
 
 export default router;

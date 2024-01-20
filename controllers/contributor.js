@@ -23,17 +23,17 @@ export const contributor_login = async (request, response) => {
       expiresIn: '20s',
     });
 
-    const reftoken = jwt.sign({
+    const vxrft = jwt.sign({
       vid: cont.vid,
       img: cont.img,
       email: cont.email,
       username: cont.username,
-    }, process.env.reftoken, {
+    }, process.env.vxrft, {
       expiresIn: '1d',
     });
 
-    await contributor.update({ agent, reftoken }, { where: { email } })
-    response.cookie('reftoken', reftoken, { httpOnly: true, sameSite: "none", secure: true, maxAge: 24 * 60 * 60 * 1000 });
+    await contributor.update({ agent, vxrft }, { where: { email } })
+    response.cookie('vxrft', vxrft, { httpOnly: true, sameSite: "none", secure: true, maxAge: 24 * 60 * 60 * 1000 });
     response.json({ token });
   } catch (error) {
     return response.status(403).json(error.message);
@@ -88,7 +88,7 @@ export const contributor_logout = async (request, response) => {
   const agent = request.headers['user-agent'] + '' + request.ip
   const cont = await contributor.findOne({ agent });
   if (!cont) return response.status('you have been logged out!');
-  await contributor.update({ agent: null, reftoken: null }, { where: { agent } });
-  response.clearCookie('reftoken');
+  await contributor.update({ agent: null, vxrft: null }, { where: { agent } });
+  response.clearCookie('vxrft');
   response.status(200).json('successfully logged out');
 };

@@ -8,7 +8,7 @@ import nodemailer from '../utils/nodemailer.js';
 import randomize from '../utils/randomize.js';
 
 export const ready = async (request, response) => {
-  response.status(200).redirect(`${process.env.clientUrl}`)
+  response.sendStatus(200)
 };
 
 export const user_login = async (request, response) => {
@@ -29,23 +29,21 @@ export const user_login = async (request, response) => {
       expiresIn: '20s',
     });
 
-    const reftoken = jwt.sign({
+    const vxrft = jwt.sign({
       vid: user.vid,
       email: user.email,
       username: user.username,
-    }, process.env.reftoken, {
+    }, process.env.vxrft, {
       expiresIn: '1d',
     });
 
-    await users.update({ reftoken, agent }, { where: { email } })
+    await users.update({ vxrft, agent }, { where: { email } })
     const now = date({ date: new Date(), showMilliseconds: true });
     console.log(`==> new user login : ${email} \t (${now})`)
 
-    response.cookie('reftoken', reftoken, {httpOnly: true, sameSite:"None", secure:true, maxAge: 24 * 60 * 60 * 1000,});
+    response.cookie('vxrft', vxrft, {httpOnly: true, sameSite:"None", secure:true, maxAge: 24 * 60 * 60 * 1000,});
     response.json({ token });
-  } catch (error) {
-    return response.status(403).json(error.message);
-  }
+  } catch (error) { return response.sendStatus(500) }
 };
 
 export const user_register = async (request, response) => {
@@ -70,7 +68,7 @@ export const user_confirm = async (request, response) => {
   if (!token) return response.status(404).json("forbidden request");
 
   jwt.verify(token, process.env.token, async (error) => {
-    if (error) return response.status(403).json(error.message);
+    if (error) return response.sendStatus(500)
     const data = jwt.decode(token);
     const user = await users.findOne({ where: { email: data.email } });
     if (user) return response.status(403).json("already created");
@@ -85,26 +83,26 @@ export const user_confirm = async (request, response) => {
 };
 
 export const user_logout = async (request, response) => {
-  const reftoken = request.cookies.reftoken
-  const user = await users.findOne({ where: { reftoken } })
-  const cont = await contributor.findOne({ where: { reftoken } })
-  if (user) await users.update({ reftoken: null, agent: null }, { where: { reftoken } })
-  if (cont) await contributor.update({ reftoken: null, agent: null }, { where: { reftoken } })
-  response.clearCookie('reftoken');
+  const vxrft = request.cookies.vxrft
+  const user = await users.findOne({ where: { vxrft } })
+  const cont = await contributor.findOne({ where: { vxrft } })
+  if (user) await users.update({ vxrft: null, agent: null }, { where: { vxrft } })
+  if (cont) await contributor.update({ vxrft: null, agent: null }, { where: { vxrft } })
+  response.clearCookie('vxrft');
   response.status(200).json('successfully logout');
 };
 
 export const getUser = async (request, response) => {
-  const { reftoken } = request.cookies;
-  if (!reftoken) return response.status(403).json('kamu tidak memiliki akses');
-  const user = await users.findOne({ attributes: ['username', 'id', 'email', 'img'] }, { where: { reftoken } });
+  const { vxrft } = request.cookies;
+  if (!vxrft) return response.status(403).json('kamu tidak memiliki akses');
+  const user = await users.findOne({ attributes: ['username', 'vid', 'email', 'img'] }, { where: { vxrft } });
   if (!user) return response.status(404).json('user not found');
   response.status(200).json(user);
 };
 
 export const updateUser = async (request, response) => {
-  const reftoken = request.cookies.reftoken
-  const user = await users.findOne({ where: { reftoken } });
+  const vxrft = request.cookies.vxrft
+  const user = await users.findOne({ where: { vxrft } });
   if (!user) return response.status(404).json('user not found');
   if (!request.files) return response.status(404).json('empty data');
 
@@ -123,8 +121,8 @@ export const updateUser = async (request, response) => {
     try {
       const url = `${request.protocol}://${request.get('host')}/images/user/`;
       if (user.img) { rm(`./public/images/user/${user.img.slice(url.length)}`, (error) => console.log(error)); }
-      await users.update({ img: imgurl }, { where : { reftoken } })
+      await users.update({ img: imgurl }, { where : { vxrft } })
       response.status(200).json('successfully updated profile photo');
-    } catch (error) { response.status(403).json(error.message); }
+    } catch (error) { return response.sendStatus(500) }
   });
 };

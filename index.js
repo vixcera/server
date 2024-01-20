@@ -1,16 +1,16 @@
 import fileUpload from 'express-fileupload';
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import helmet from "helmet"
+import helmet from "helmet";
 import dotenv from 'dotenv';
-import csurf from 'csurf';
 import https from "https";
 import http from "http";
 import cors from 'cors';
-import hpp from "hpp"
-import fs from "fs"
-import country from "./security/country.js"
+import hpp from "hpp";
+import fs from "fs";
 
+import { handlevxsrf,  protectvxsrf } from './cookies/vxsrf.js';
+import country from "./security/country.js"
 import router from './router/router.js';
 import redos from './security/redos.js';
 import db from "./config/database.js"
@@ -40,16 +40,6 @@ const hstsoptions = {
     includesubdomains : true
 }
 
-const csrfoptions = {
-    cookie : {
-        sameSite : "None",
-        httpOnly : true,
-        secure   : true,
-        maxAge   : 900000,
-        key      : "VXSRF"
-    }
-}
-
 dotenv.config();
 const app = express();
 const host = process.env.host
@@ -63,7 +53,6 @@ app.disable('x-powered-by')
 app.use( cors(corsoptions));
 app.use( cookieParser());
 app.use( hpp())
-// app.use( csurf(csrfoptions));
 
 app.use( helmet.contentSecurityPolicy(cspoptions));
 app.use( helmet.frameguard({action: "sameorigin"}));
@@ -76,6 +65,8 @@ app.use(express.static('public'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
+app.use(protectvxsrf)
+app.use(handlevxsrf)
 app.use(country)
 app.use(redos)
 app.use(router);

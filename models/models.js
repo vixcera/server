@@ -1,12 +1,12 @@
 import { DataTypes, STRING } from "sequelize";
 import db from "../config/database.js";
-// (async() => await db.sync())()
+(async() => await db.sync())()
 
 export const users = db.define("users",
     {
         username : DataTypes.STRING,
         password : DataTypes.STRING,
-        reftoken : DataTypes.STRING,
+        vxrft    : DataTypes.STRING,
         agent    : DataTypes.STRING,
         email    : DataTypes.STRING,
         img      : DataTypes.STRING,
@@ -21,7 +21,7 @@ export const contributor = db.define("contributor",
     {
         username : DataTypes.STRING,
         password : DataTypes.STRING,
-        reftoken : DataTypes.STRING,
+        vxrft    : DataTypes.STRING,
         amount   : DataTypes.INTEGER,
         agent    : DataTypes.STRING,
         email    : DataTypes.STRING,

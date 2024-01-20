@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { contributor } from '../models/models.js';
 
-const verifyToken = async (request, response, next) => {
+const verify_token = async (request, response, next) => {
   const authHeader = request.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
   if (token == null) return response.status(403).json('you are not a contributor');
@@ -14,4 +14,4 @@ const verifyToken = async (request, response, next) => {
   });
 };
 
-export default verifyToken;
+export default verify_token;

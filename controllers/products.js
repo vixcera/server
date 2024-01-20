@@ -72,6 +72,15 @@ export const waitingList = async (request, response) => {
   response.status(200).json(data);
 };
 
+export const waitingById = async (request, response) => {
+  const { password } = request.body;
+  if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
+  const { vid } = request.params;
+  const data = await waiting.findAll({ where: { vid }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid', 'ctg', 'createdAt', 'tech'] });
+  if (!data) return response.status(404).json('product not found');
+  response.status(200).json(data);
+}
+
 export const confirmProduct = async (request, response) => {
   const { password } = request.body;
   if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
