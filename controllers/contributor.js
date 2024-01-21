@@ -42,8 +42,8 @@ export const contributor_login = async (request, response) => {
 
 export const contributor_register = async (request, response) => {
   const { username, email, password } = request.body;
-  const cont = await contributor.findOne({ where: { email } });
   if (!email.includes('@gmail.com')) return response.status(403).json('please input a valid email!');
+  const cont = await contributor.findOne({ where: { email } });
   if (cont) return response.status(302).json('email has been registered, please enter another email!');
 
   if (email && username && password) {

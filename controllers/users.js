@@ -1,11 +1,11 @@
-import jwt from 'jsonwebtoken';
 import { rm } from 'fs';
 import path from 'path';
 import date from 'date-time';
 import bcyrpt from 'bcryptjs';
-import { contributor, users } from "../models/models.js"
+import jwt from 'jsonwebtoken';
 import nodemailer from '../utils/nodemailer.js';
 import randomize from '../utils/randomize.js';
+import { contributor, users } from "../models/models.js"
 
 export const ready = async (request, response) => {
   response.sendStatus(200)
@@ -48,8 +48,8 @@ export const user_login = async (request, response) => {
 
 export const user_register = async (request, response) => {
   const { email, username, password } = request.body;
-  const user = await users.findOne({ where: { email } });
   if (!email.includes('@gmail.com')) return response.status(422).json('please input a valid email!');
+  const user = await users.findOne({ where: { email } });
   if (user) return response.status(403).json('email has been registered, please enter another email!');
   if (email && username && password) {
     const token = jwt.sign({

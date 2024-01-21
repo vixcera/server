@@ -6,7 +6,6 @@ import { users, contributor } from "../models/models.js"
 const vxrft = async (request, response) => {
     try {
         const vxrft = request.cookies.vxrft
-        console.log(vxrft)
         const now = date({ date: new Date(), showMilliseconds: true })
         const user = await users.findOne({ where: { vxrft } }) || await contributor.findOne({ where: { vxrft } });
         if (!user) {

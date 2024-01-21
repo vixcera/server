@@ -23,9 +23,9 @@ export const productsByCategory = async (request, response) => {
 };
 
 export const createProduct = async (request, response) => {
-  const reftoken = request.cookies.reftoken
-  if (!reftoken) return response.status(403).json("you don't have access!")
-  const user = await contributor.findOne({ where: { reftoken } });
+  const vxrft = request.cookies.vxrft
+  if (!vxrft) return response.status(403).json("you don't have access!")
+  const user = await contributor.findOne({ where: { vxrft } });
   if (!user) return response.status(403).json("you don't have access!");
   const { file, img } = request.files;
   const { title, desc, ctg, price, tech } = request.body;
@@ -66,15 +66,15 @@ export const createProduct = async (request, response) => {
 };
 
 export const waitingList = async (request, response) => {
-  const { password } = request.body;
-  if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
-  const data = await waiting.findAll();
-  response.status(200).json(data);
+  const author = request.headers.author
+  if (author !== process.env.admin_pass) return response.status(403).json('only admin can access!');
+  const data = await waiting.findAll()
+  response.status(200).json(data)
 };
 
 export const waitingById = async (request, response) => {
-  const { password } = request.body;
-  if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
+  const author = request.headers.author
+  if (author !== process.env.admin_pass) return response.status(403).json('only admin can access!');
   const { vid } = request.params;
   const data = await waiting.findAll({ where: { vid }, attributes: ['price', 'desc', 'title', 'by', 'img', 'vid', 'ctg', 'createdAt', 'tech'] });
   if (!data) return response.status(404).json('product not found');
@@ -82,15 +82,16 @@ export const waitingById = async (request, response) => {
 }
 
 export const confirmProduct = async (request, response) => {
-  const { password } = request.body;
-  if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
-  const data = await waiting.findOne({ where: { vid: request.body.vid } });
+  const author = request.headers.author
+  const { vid } = request.params;
+  if (author !== process.env.admin_pass) return response.status(403).json('only admin can access!');
+  const data = await waiting.findOne({ where: { vid } });
   if (!data) return response.status(404).json('product data not found');
   try {
     await products.create({
       vid: data.vid, price: data.price, title: data.title, tech: data.tech, desc: data.desc, file: data.file, img: data.img, ctg: data.ctg, by: data.by,
     });
-    await waiting.destroy({ where: { vid: request.body.vid } })
+    await waiting.destroy({ where: { vid } })
     return response.status(201).json('product verification successful');
   } catch (error) {
     return response.status(433).json(error.message);
@@ -98,12 +99,13 @@ export const confirmProduct = async (request, response) => {
 };
 
 export const rejectProduct = async (request, response) => {
-  const { password } = request.body;
-  if (password !== process.env.admin_pass) return response.status(403).json('only admin can access!');
-  const data = await waiting.findOne({ where: { vid: request.body.vid } });
+  const author = request.headers.author
+  const { vid } = request.params;
+  if (author !== process.env.admin_pass) return response.status(403).json('only admin can access!');
+  const data = await waiting.findOne({ where: { vid } });
   if (!data) return response.status(404).json('product data not found');
   try {
-    await waiting.destroy({ where: { vid: request.body.vid } });
+    await waiting.destroy({ where: { vid } });
     const fileUrl = `${request.protocol}://${request.get('host')}/files/`;
     const imgUrl = `${request.protocol}://${request.get('host')}/images/product/`;
     rm(`./public/images/product/${data.img.slice(imgUrl.length)}`, (error) => error && console.log(error.message));
